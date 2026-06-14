@@ -1,0 +1,52 @@
+1.先在datasets里面创建数据集
+
+2.创建.yaml文件
+内容举例：
+path: ./datasets/fire  # 数据集的根目录
+train: train/images  # 训练集与path的相对路径
+val: val/images  # 验证集与path的相对路径
+test:  # test images (optional)
+
+# Classes
+nc: 1  # 类别数量，这里只有一个fire类别，因此nc为1
+names: ['fire']  # 类别的名字
+
+3.训练
+编辑配置
+--weights yolov5s.pt --data dogface.yaml --workers 0 --batch-size 8 --epochs 5 --imgsz 416
+
+环境变量PYTHONUNBUFFERED=1
+
+结果.pt：在runs/train/exp
+
+4.测试程序 python detect.py --weights best_dogface.pt --source ./datasets/。。。
+
+结果在runs/detect中
+
+5.转换.onnx文件
+全部代码：
+from ultralytics import YOLO
+
+
+def export_model():
+    # 1. 加载你训练好的 PyTorch 模型
+    model = YOLO("best_dogface.pt") #只需要改名字
+
+    # 2. 导出为 ONNX 格式
+    # opset=12 兼容性较好
+    # simplify=True 会使用 onnxsim 消除冗余的计算节点，强烈建议开启
+    # dynamic=False 固定输入尺寸（通常是 640x640），固定尺寸推理速度最快
+    print("开始导出 ONNX 模型...")
+    export_path = model.export(
+        format="onnx",
+        opset=12,
+        simplify=True,
+        imgsz=640,
+        dynamic=False,
+    )
+
+    print(f"导出成功！ONNX 模型已保存至: {export_path}")
+
+
+if __name__ == "__main__":
+    export_model()
